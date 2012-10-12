@@ -63,6 +63,10 @@ public class DummyInMemoryCacheStoreConfigurationBuilder
 
    @Override
    public DummyInMemoryCacheStoreConfigurationBuilder read(DummyInMemoryCacheStoreConfiguration template) {
+      this.storeName(template.storeName());
+      this.debug(template.debug());
+      this.failKey(template.failKey());
+
       // AbstractStore-specific configuration
       fetchPersistentState = template.fetchPersistentState();
       ignoreModifications = template.ignoreModifications();

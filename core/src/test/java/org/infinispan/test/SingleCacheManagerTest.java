@@ -83,7 +83,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
          throw e;
       }
    }
-   
+
    @AfterClass(alwaysRun=true)
    protected void destroyAfterClass() {
       try {
@@ -134,11 +134,11 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
    protected abstract EmbeddedCacheManager createCacheManager() throws Exception;
 
-   protected Cache cache() {
-      return cache;
+   protected <K, V> Cache<K, V> cache() {
+      return (Cache<K, V>) cache;
    }
 
-   protected Cache cache(String name) {
+   protected <K, V> Cache<K, V> cache(String name) {
       return cacheManager.getCache(name);
    }
 }
