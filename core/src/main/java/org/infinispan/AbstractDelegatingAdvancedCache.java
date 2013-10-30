@@ -14,10 +14,13 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 
+import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
+
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -26,6 +29,7 @@ import java.util.List;
  * Similar to {@link org.infinispan.AbstractDelegatingCache}, but for {@link AdvancedCache}.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Tristan Tarrant
  * @see org.infinispan.AbstractDelegatingCache
  */
 public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCache<K, V> implements AdvancedCache<K, V> {
@@ -102,6 +106,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
+   public AuthorizationManager getAuthorizationManager() {
+      return cache.getAuthorizationManager();
+   }
+
+   @Override
    public RpcManager getRpcManager() {
       return cache.getRpcManager();
    }
@@ -141,6 +150,10 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       return this.wrapper.wrap(this.cache.withFlags(flags));
    }
 
+   @Override
+   public AdvancedCache<K, V> as(Subject subject) {
+      return this.wrapper.wrap(this.cache.as(subject));
+   }
    @Override
    public boolean lock(K... key) {
       return cache.lock(key);

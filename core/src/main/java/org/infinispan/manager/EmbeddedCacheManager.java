@@ -16,6 +16,8 @@ import org.infinispan.remoting.transport.Transport;
 import java.util.List;
 import java.util.Set;
 
+import javax.security.auth.Subject;
+
 /**
  * EmbeddedCacheManager is an CacheManager that runs in the same JVM as the client.
  * <p/>
@@ -224,4 +226,6 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
    Transport getTransport();
 
    GlobalComponentRegistry getGlobalComponentRegistry();
+
+   EmbeddedCacheManager as(Subject subject);
 }

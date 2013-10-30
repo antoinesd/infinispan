@@ -9,11 +9,13 @@ import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
+import javax.security.auth.Subject;
 import javax.transaction.InvalidTransactionException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -81,6 +83,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.KeyFilter;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.StatsImpl;
 import org.infinispan.transaction.TransactionCoordinator;
@@ -129,6 +132,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private TransactionTable txTable;
    private RecoveryManager recoveryManager;
    private TransactionCoordinator txCoordinator;
+   private AuthorizationManager authorizationManager;
    private GlobalConfiguration globalCfg;
    private boolean isClassLoaderInContext;
 
@@ -154,6 +158,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                   @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
                                   TransactionTable txTable, RecoveryManager recoveryManager, TransactionCoordinator txCoordinator,
                                   LockManager lockManager,
+                                  AuthorizationManager authorizationManager,
                                   GlobalConfiguration globalCfg) {
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
@@ -175,6 +180,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       this.recoveryManager = recoveryManager;
       this.txCoordinator = txCoordinator;
       this.lockManager = lockManager;
+      this.authorizationManager = authorizationManager;
       this.globalCfg = globalCfg;
    }
 
@@ -743,6 +749,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public DistributionManager getDistributionManager() {
       return distributionManager;
+   }
+
+   @Override
+   public AuthorizationManager getAuthorizationManager() {
+      return authorizationManager;
    }
 
    @Override
@@ -1379,6 +1390,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          return this;
       else
          return new DecoratedCache<K, V>(this, flags);
+   }
+
+   @Override
+   public AdvancedCache<K, V> as(final Subject subject) {
+      throw new UnsupportedOperationException();
    }
 
    private Transaction getOngoingTransaction() {

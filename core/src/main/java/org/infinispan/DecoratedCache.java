@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -28,6 +30,7 @@ import org.infinispan.util.concurrent.NotifyingFuture;
  *
  * @author Manik Surtani
  * @author Sanne Grinovero
+ * @author Tristan Tarrant
  * @see AdvancedCache#with(ClassLoader)
  * @see AdvancedCache#withFlags(org.infinispan.context.Flag...)
  * @since 5.1
@@ -37,16 +40,25 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    private final EnumSet<Flag> flags;
    private final WeakReference<ClassLoader> classLoader;
    private final CacheImpl<K, V> cacheImplementation;
+   private final Subject subject;
 
    public DecoratedCache(AdvancedCache<K, V> delegate, ClassLoader classLoader) {
-      this(delegate, classLoader, null);
+      this(delegate, classLoader, null, null);
    }
 
    public DecoratedCache(AdvancedCache<K, V> delegate, Flag... flags) {
-      this(delegate, null, flags);
+      this(delegate, null, null, flags);
+   }
+
+   public DecoratedCache(AdvancedCache<K, V> delegate, Subject subject) {
+      this(delegate, null, subject, null);
    }
 
    public DecoratedCache(AdvancedCache<K, V> delegate, ClassLoader classLoader, Flag... flags) {
+      this(delegate, classLoader, null, flags);
+   }
+
+   public DecoratedCache(AdvancedCache<K, V> delegate, ClassLoader classLoader, Subject subject, Flag... flags) {
       super(delegate);
       if (flags == null || flags.length == 0)
          this.flags = null;
@@ -55,26 +67,28 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
          this.flags.addAll(Arrays.asList(flags));
       }
       this.classLoader = new WeakReference<ClassLoader>(classLoader);
+      this.subject = subject;
 
-      if (flags == null && classLoader == null)
-         throw new IllegalArgumentException("There is no point in using a DecoratedCache if neither a ClassLoader nor any Flags are set.");
+      if (flags == null && classLoader == null && subject == null)
+         throw new IllegalArgumentException("There is no point in using a DecoratedCache if neither a ClassLoader, Subject nor any Flags are set.");
 
       // Yuk
       cacheImplementation = (CacheImpl<K, V>) delegate;
    }
 
-   private DecoratedCache(CacheImpl<K, V> delegate, ClassLoader classLoader, EnumSet<Flag> newFlags) {
+   private DecoratedCache(CacheImpl<K, V> delegate, ClassLoader classLoader, Subject subject, EnumSet<Flag> newFlags) {
       //this constructor is private so we already checked for argument validity
       super(delegate);
       this.flags = newFlags;
       this.classLoader = new WeakReference<ClassLoader>(classLoader);
       this.cacheImplementation = delegate;
+      this.subject = subject;
    }
 
    @Override
    public AdvancedCache<K, V> with(final ClassLoader classLoader) {
-      if (classLoader == null) throw new IllegalArgumentException("ClassLoader passed in cannot be null!");
-      return new DecoratedCache<K, V>(this.cacheImplementation, classLoader, flags);
+      if (classLoader == null) throw new IllegalArgumentException("ClassLoader cannot be null!");
+      return new DecoratedCache<K, V>(this.cacheImplementation, classLoader, subject, flags);
    }
 
    @Override
@@ -89,15 +103,21 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
          }
          else {
             if (this.flags==null) {
-               return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader.get(), EnumSet.copyOf(flagsToAdd));
+               return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader.get(), subject, EnumSet.copyOf(flagsToAdd));
             }
             else {
                EnumSet<Flag> newFlags = EnumSet.copyOf(this.flags);
                newFlags.addAll(flagsToAdd);
-               return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader.get(), newFlags);
+               return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader.get(), subject, newFlags);
             }
          }
       }
+   }
+
+   @Override
+   public AdvancedCache<K, V> as(final Subject subject) {
+      if (subject == null) throw new IllegalArgumentException("Subject cannot be null!");
+      return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader.get(), subject, flags);
    }
 
    @Override

@@ -34,6 +34,7 @@ import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.xml.namespace.QName;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -1040,5 +1041,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "%s reported that a third node was suspected, see cause for info on the node that was suspected", id = 281)
    SuspectException thirdPartySuspected(Address sender, @Cause SuspectException e);
+
+   @Message(value = "Unauthorized access: subject '%s' lacks '%s' permission", id = 282)
+   SecurityException unauthorizedAccess(String subject, String permission);
 
 }

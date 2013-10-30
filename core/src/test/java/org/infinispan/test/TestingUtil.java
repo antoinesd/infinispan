@@ -713,7 +713,7 @@ public class TestingUtil {
       for (Cache c : caches) {
          try {
             if (c != null && c.getStatus() == ComponentStatus.RUNNING) {
-               TransactionManager tm = getTransactionManager(c);
+               TransactionManager tm = c.getAdvancedCache().getTransactionManager();
                if (tm != null) {
                   try {
                      tm.rollback();
@@ -945,7 +945,7 @@ public class TestingUtil {
     * Extracts a component of a given type from the cache's internal component registry
     */
    public static <T> T extractComponent(Cache cache, Class<T> componentType) {
-      ComponentRegistry cr = extractComponentRegistry(cache);
+      ComponentRegistry cr = extractComponentRegistry(cache.getAdvancedCache());
       return cr.getComponent(componentType);
    }
 

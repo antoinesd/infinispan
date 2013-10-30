@@ -12,12 +12,15 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.locks.LockManager;
 
+import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -26,6 +29,7 @@ import java.util.List;
  *
  * @author Manik Surtani
  * @author Galder Zamarreño
+ * @author Tristan Tarrant
  * @since 4.0
  */
 public interface AdvancedCache<K, V> extends Cache<K, V> {
@@ -55,6 +59,21 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * to be applied.
     */
    AdvancedCache<K, V> withFlags(Flag... flags);
+
+   /**
+    * A method for explicitly specifying a {@link Subject} whose permissions will be checked before performing
+    * operations on the cache. E.g.:
+    * <pre>
+    *   Subject user = ...
+    *   cache.as(user).get(key1).
+    * </pre>
+    * will inoke a cache.get() only if "user" has READ permissions on the cache.
+    *
+    * @param subject an authenticated Subject
+    * @return an {@link AdvancedCache} instance on which a real operation is to be invoked with the specified
+    * subject.
+    */
+   AdvancedCache<K, V> as(Subject subject);
 
    /**
     * Adds a custom interceptor to the interceptor chain, at specified position, where the first interceptor in the
@@ -124,6 +143,13 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return a DistributionManager, or null.
     */
    DistributionManager getDistributionManager();
+
+   /**
+    * Retrieves the {@link AuthorizationManager} if the cache has security enabled. Otherwise returns null
+    *
+    * @return an AuthorizationManager or null
+    */
+   AuthorizationManager getAuthorizationManager();
 
    /**
     * Locks a given key or keys eagerly across cache nodes in a cluster.
@@ -371,5 +397,4 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @since 5.3
     */
    CacheEntry getCacheEntry(K key);
-
 }

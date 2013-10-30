@@ -37,6 +37,10 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.security.CachePermission;
+import org.infinispan.security.impl.AuthorizationHelper;
+import org.infinispan.security.impl.AuthorizationManagerImpl;
+import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -53,6 +57,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import javax.security.auth.Subject;
 
 /**
  * A <tt>CacheManager</tt> is the primary mechanism for retrieving a {@link Cache} instance, and is often used as a
@@ -109,6 +115,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    private final ConcurrentMap<String, Configuration> configurationOverrides = CollectionFactory.makeConcurrentMap();
    private final GlobalComponentRegistry globalComponentRegistry;
    private volatile boolean stopping;
+   private Subject subject;
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
@@ -134,7 +141,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     *
     * @param defaultConfiguration configuration to use as a template for all caches created
     */
-   public DefaultCacheManager(org.infinispan.configuration.cache.Configuration defaultConfiguration) {
+   public DefaultCacheManager(Configuration defaultConfiguration) {
       this(null, defaultConfiguration, true);
    }
 
@@ -528,13 +535,18 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     */
    private <K, V> Cache<K, V> wireAndStartCache(String cacheName) {
       CacheWrapper createdCacheWrapper = null;
-
+      Configuration c = null;
       try {
          synchronized (caches) {
             //fetch it again with the lock held
             CacheWrapper existingCacheWrapper = caches.get(cacheName);
             if (existingCacheWrapper != null) {
                return null; //signal that the cache was created by someone else
+            }
+            c = getConfiguration(cacheName);
+            if (c.security().enabled()) {
+               // Don't even attempt to wire anything if we don't have LIFECYCLE privileges
+               AuthorizationHelper.checkPermission(globalConfiguration.security(), c.security().authorization(), CachePermission.LIFECYCLE);
             }
             createdCacheWrapper = new CacheWrapper();
             if (caches.put(cacheName, createdCacheWrapper) != null) {
@@ -543,10 +555,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          }
 
          globalComponentRegistry.start();
-         Configuration c = getConfiguration(cacheName);
 
          log.tracef("About to wire and start cache %s", cacheName);
          Cache<K, V> cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);
+
+         if(cache.getAdvancedCache().getAuthorizationManager() != null) {
+            cache = new SecureCacheImpl<K, V>(cache.getAdvancedCache());
+         }
          createdCacheWrapper.setCache(cache);
 
          // start the cache-level components
@@ -808,6 +823,15 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return globalComponentRegistry;
    }
 
+   @Override
+   public DefaultCacheManager as(Subject subject) {
+      if (subject == null)
+         throw new IllegalArgumentException("Cannot specify a null subject");
+      if (this.subject != null)
+         throw new IllegalStateException("A subject has already been specified for this CacheManager");
+      this.subject = subject;
+      return this; //fixme
+   }
 
    @Override
    public String toString() {
