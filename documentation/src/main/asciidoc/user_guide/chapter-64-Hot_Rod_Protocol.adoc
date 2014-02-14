@@ -6,6 +6,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:$$#_hot_rod_protocol_1_1$$[Hot Rod Protocol 1.1]
 * link:$$#_hot_rod_protocol_1_2$$[Hot Rod Protocol 1.2]
 * link:$$#_hot_rod_protocol_1_3$$[Hot Rod Protocol 1.3]
+* link:$$#_hot_rod_protocol_1_3$$[Hot Rod Protocol 1.4]
 
 ===== Hot Rod Protocol 1.0
 
@@ -988,6 +989,81 @@ respectively defined in link:$$https://github.com/infinispan/infinispan/blob/mas
 These definitions could change in future Infinispan versions, but as long as these evolutions will be kept backward
 compatible (according to the rules defined link:$$https://developers.google.com/protocol-buffers/docs/proto#updating$$[here]) no new Hot Rod
 protocol version will be introduced to accommodate this.
+
+===== Hot Rod Protocol 1.4
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 7.0.0.Final.
+
+====== Request Header
+The `version` field in the header is updated to `14`.
+
+The following new request operation codes have been added:
+
+* +0x21+ = auth mech list request
+* +0x23+ = auth request
+
+====== Response Header
+
+The following new response operation codes have been added:
+
+* +0x22+ = auth mech list response
+* +0x24+ = auth mech response
+
+====== Operations
+
+.Auth Mech List
+
+Request format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Request header
+|==============================================================================
+
+Response format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Response header
+| Mech count | vInt | The number of mechs
+| Mech 1 | string | String containing the name of the SASL mech in its IANA-registered form (e.g. GSSAPI, CRAM-MD5, etc)
+| Mech 2 | string |
+| ...etc |        |
+|==============================================================================
+
+The purpose of this operation is to obtain the list of valid SASL authentication mechs supported by the server. The client 
+will then need to issue an Authenticate request with the preferred mech.
+
+====== Operations
+
+.Authenticate
+
+Request format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Request header
+| Mech   | string   | String containing the name of the mech chosen by the client for authentication
+| Challenge length | vInt | Length of the SASL challenge 
+| Challenge data   | byte array | The SASL challenge
+|==============================================================================
+
+Response format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Response header
+| Challenge length | vInt | Length of the SASL challenge 
+| Challenge data   | byte array | The SASL challenge
+|==============================================================================
+
+The purpose of this operation is to authenticate a client against a server using SASL. The authentication process, depending
+on the chosen mech, might be a multi-step operation. Once complete a unique session identifier is generated
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash
