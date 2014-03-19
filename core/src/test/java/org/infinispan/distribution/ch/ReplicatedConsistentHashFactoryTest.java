@@ -2,6 +2,8 @@ package org.infinispan.distribution.ch;
 
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.TestAddress;
+import org.infinispan.distribution.ch.impl.OwnershipStatistics;
+import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
 

@@ -13,7 +13,7 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
@@ -21,6 +21,7 @@ import org.testng.annotations.Test;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
+
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 

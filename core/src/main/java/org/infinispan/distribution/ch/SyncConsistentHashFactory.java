@@ -16,6 +16,7 @@ import java.util.TreeSet;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 

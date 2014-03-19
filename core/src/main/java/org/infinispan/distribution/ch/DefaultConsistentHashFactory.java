@@ -7,6 +7,8 @@ import java.util.*;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
+import org.infinispan.distribution.ch.impl.OwnershipStatistics;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;

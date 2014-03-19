@@ -1,8 +1,8 @@
 package org.infinispan.tree;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.atomic.AtomicHashMapProxy;
 import org.infinispan.atomic.AtomicMap;
+import org.infinispan.atomic.impl.AtomicHashMapProxy;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.commons.util.Immutables;

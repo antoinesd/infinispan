@@ -2,6 +2,7 @@ package org.infinispan.distribution.ch;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 

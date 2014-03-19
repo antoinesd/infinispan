@@ -32,7 +32,7 @@
 
       <globalJmxStatistics enabled="false" jmxDomain="infinispan"/>
 
-      <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0"/>
+      <serialization marshallerClass="org.infinispan.marshall.core.VersionAwareMarshaller" version="1.0"/>
 
       <shutdown hookBehavior="DEFAULT"/>
    </global>

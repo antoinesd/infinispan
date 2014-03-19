@@ -1,5 +1,6 @@
 package org.infinispan.distribution.ch;
 
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.testng.annotations.Test;
 
 /**

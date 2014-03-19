@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
+import org.infinispan.distribution.ch.impl.OwnershipStatistics;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;

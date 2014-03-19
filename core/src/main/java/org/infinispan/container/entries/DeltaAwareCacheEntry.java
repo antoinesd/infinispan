@@ -2,9 +2,9 @@ package org.infinispan.container.entries;
 
 import org.infinispan.atomic.CopyableDeltaAware;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
+import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
 import org.infinispan.util.logging.Log;
