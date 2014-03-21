@@ -213,6 +213,12 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
             if (g.status == Success) writeRangedBytes(g.data.get, buf)
          case q: QueryResponse =>
             writeRangedBytes(q.result, buf)
+         case a: AuthMechListResponse => {
+            writeUnsignedInt(a.mechs.size, buf)
+            for(mech <- a.mechs) {
+               writeString(mech, buf)
+            }
+         }
          case e: ErrorResponse => writeString(e.msg, buf)
          case _ => if (buf == null)
             throw new IllegalArgumentException("Response received is unknown: " + r)

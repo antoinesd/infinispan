@@ -238,6 +238,13 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
       handler.getResponse(op.id).asInstanceOf[TestQueryResponse]
    }
+
+   def authMechList(): TestAuthMechListResponse = {
+      val op = new AuthMechListOp(0xA0, protocolVersion, 0x21, defaultCacheName, 1, 0)
+      val writeFuture = writeOp(op)
+      val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
+      handler.getResponse(op.id).asInstanceOf[TestAuthMechListResponse]
+   }
 }
 
 private class ClientChannelInitializer(client: HotRodClient, rspTimeoutSeconds: Int, sslEngine: SSLEngine, protocolVersion: Byte) extends ChannelInitializer[Channel] {
@@ -280,7 +287,8 @@ private class Encoder(protocolVersion: Byte) extends MessageToByteEncoder[Object
                writeRangedBytes(new Array[Byte](0), buffer) // transaction id
             if (op.code != 0x13 && op.code != 0x15
                     && op.code != 0x17 && op.code != 0x19
-                    && op.code != 0x1D && op.code != 0x1F) { // if it's a key based op...
+                    && op.code != 0x1D && op.code != 0x1F
+                    && op.code != 0x21 && op.code != 0x23) { // if it's a key based op...
                writeRangedBytes(op.key, buffer) // key length + key
                if (op.value != null) {
                   if (op.code != 0x0D) { // If it's not removeIfUnmodified...
@@ -452,6 +460,15 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
             val result = readRangedBytes(buf)
             new TestQueryResponse(op.version, id, op.cacheName, op.clientIntel,
                result, op.topologyId, topologyChangeResponse)
+         }
+         case AuthMechListResponse => {
+            val size = readUnsignedInt(buf)
+            val mechs = mutable.Set.empty[String]
+            for (i <- 1 to size) {
+               mechs += readString(buf)
+            }
+            new TestAuthMechListResponse(op.version, id, op.cacheName, op.clientIntel,
+               mechs.toSet, op.topologyId, topologyChangeResponse)
          }
          case ErrorResponse => {
             if (op == null)
@@ -678,6 +695,15 @@ class QueryOp(override val magic: Int,
         extends Op(magic, version, code, cacheName, null, 0, 0, null, 0, 0,
            clientIntel, topologyId)
 
+class AuthMechListOp(override val magic: Int,
+              override val version: Byte,
+              override val code: Byte,
+              override val cacheName: String,
+              override val clientIntel: Byte,
+              override val topologyId: Int)
+      extends Op(magic, version, code, cacheName, null, 0, 0, null, 0, 0,
+                 clientIntel, topologyId)
+
 class TestResponse(override val version: Byte, override val messageId: Long,
                    override val cacheName: String, override val clientIntel: Short,
                    override val operation: OperationResponse,
@@ -770,6 +796,11 @@ class TestQueryResponse(override val version: Byte, override val messageId: Long
                           override val topologyId: Int, override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends TestResponse(version, messageId, cacheName, clientIntel, QueryResponse, Success, topologyId, topologyResponse)
 
+class TestAuthMechListResponse(override val version: Byte, override val messageId: Long,
+                        override val cacheName: String, override val clientIntel: Short,
+                        val mechs: Set[String], override val topologyId: Int,
+                        override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
+      extends TestResponse(version, messageId, cacheName, clientIntel, AuthMechListResponse, Success, topologyId, topologyResponse)
 
 case class ServerNode(val host: String, val port: Int)
 

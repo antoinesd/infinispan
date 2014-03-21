@@ -119,10 +119,10 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       null // Unsupported
 
    override protected def customDecodeHeader(ch: Channel, buffer: ByteBuf): AnyRef =
-      writeResponse(ch, header.decoder.customReadHeader(header, buffer, cache))
+      writeResponse(ch, header.decoder.customReadHeader(header, buffer, cache, server))
 
    override protected def customDecodeKey(ch: Channel, buffer: ByteBuf): AnyRef =
-      writeResponse(ch, header.decoder.customReadKey(header, buffer, cache, server.getQueryFacades))
+      writeResponse(ch, header.decoder.customReadKey(header, buffer, cache, server))
 
    override protected def customDecodeValue(ch: Channel, buffer: ByteBuf): AnyRef =
       writeResponse(ch, header.decoder.customReadValue(header, buffer, cache))

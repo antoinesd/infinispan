@@ -18,6 +18,7 @@ import org.infinispan.container.entries.{CacheEntry, InternalCacheEntry}
 import org.infinispan.container.versioning.NumericVersion
 import io.netty.buffer.ByteBuf
 import scala.annotation.switch
+import scala.collection.JavaConverters._
 
 /**
  * HotRod protocol decoder specific for specification version 2.0.
@@ -50,6 +51,8 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          case 0x1B => (GetWithMetadataRequest, false)
          case 0x1D => (BulkGetKeysRequest, false)
          case 0x1F => (QueryRequest, false)
+         case 0x21 => (AuthMechListRequest, true)
+         case 0x23 => (AuthRequest, true)
          case _ => throw new HotRodUnknownOperationException(
             "Unknown operation: " + streamOp, version, messageId)
       }
@@ -152,7 +155,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             h.topologyId, None, 0)
    }
 
-   override def customReadHeader(h: HotRodHeader, buffer: ByteBuf, cache: Cache): AnyRef = {
+   override def customReadHeader(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer): AnyRef = {
       h.op match {
          case ClearRequest => {
             // Get an optimised cache in case we can make the operation more efficient
@@ -162,10 +165,16 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          }
          case PingRequest => new Response(h.version, h.messageId, h.cacheName,
             h.clientIntel, PingResponse, Success, h.topologyId)
+         case AuthMechListRequest => {
+            new AuthMechListResponse(h.version, h.messageId, h.cacheName, h.clientIntel, server.getConfiguration.authentication.allowedMechs.asScala.toSet, h.topologyId)
+         }
+         case AuthRequest => {
+            new AuthResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId)
+         }
       }
    }
 
-   override def customReadKey(h: HotRodHeader, buffer: ByteBuf, cache: Cache, queryFacades: Seq[QueryFacade]): AnyRef = {
+   override def customReadKey(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer): AnyRef = {
       h.op match {
          case RemoveIfUnmodifiedRequest => {
             val k = readKey(buffer)
@@ -215,7 +224,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          }
          case QueryRequest => {
             val query = readRangedBytes(buffer)
-            val result = queryFacades.head.query(cache, query)
+            val result = server.getQueryFacades.head.query(cache, query)
             new QueryResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                h.topologyId, result)
          }
@@ -298,6 +307,9 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          case BulkGetRequest => BulkGetResponse
          case GetWithMetadataRequest => GetWithMetadataResponse
          case BulkGetKeysRequest => BulkGetKeysResponse
+         case QueryRequest => QueryResponse
+         case AuthMechListRequest => AuthMechListResponse
+         case AuthRequest => AuthResponse
       }
    }
 
